@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  # MySQL Database
+  mysql:
+    container_name: mysql
+    image: mysql:8.0.33
+    restart: always
+    command: "--innodb_use_native_aio=0 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci"
+    cap_add: [SYS_NICE]
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: true
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - vinhtanfarm-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Redis Cache
+  redis:
+    container_name: redis
+    image: redis:6.2.12-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - vinhtanfarm-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 20s
+      retries: 10
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management
+    restart: always
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - vinhtanfarm-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      timeout: 20s
+      retries: 10
+
+networks:
+  vinhtanfarm-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  redis_data:
+  rabbitmq_data:
