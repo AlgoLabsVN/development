@@ -52,6 +52,48 @@ services:
       timeout: 20s
       retries: 10
 
+  postgres:
+    container_name: postgres
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      PGDATA: /data/postgres
+    volumes:
+      - postgres_data:/data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - vinhtanfarm-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: elasticsearch
+    mem_limit: 2g
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - http.cors.enabled=true
+      - http.cors.allow-origin=http://localhost:8080
+      - http.cors.allow-headers=X-Requested-With,Content-Type,Content-Length,Authorization
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - vinhtanfarm-network
+
+  elasticvue:
+    image: cars10/elasticvue
+    container_name: elasticvue
+    ports:
+      - "8080:8080"
+    networks:
+      - vinhtanfarm-network
+      
 networks:
   vinhtanfarm-network:
     driver: bridge
@@ -62,3 +104,5 @@ volumes:
   mysql_data:
   redis_data:
   rabbitmq_data:
+  elasticsearch_data:
+  postgres_data:
